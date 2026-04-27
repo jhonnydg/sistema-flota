@@ -16,6 +16,12 @@ const SHIFTS = [
   {id:'t',label:'Tarde', name:'Turno Tarde', start:'14:00',end:'22:00',startH:14,endH:22,color:'#185FA5',bg:'#E6F1FB'},
   {id:'n',label:'Noche', name:'Turno Noche', start:'22:00',end:'06:00',startH:22,endH:30,color:'#534AB7',bg:'#EEEDFE'},
 ];
+const CATEGORIES = {
+  independiente:{label:'Independiente',color:'#3B6D11',bg:'#EAF3DE'},
+  farmacorp:    {label:'Farmacorp',    color:'#185FA5',bg:'#E6F1FB'},
+  servicio:     {label:'Servicio',     color:'#534AB7',bg:'#EEEDFE'},
+};
+const VEHICLES = ['Linkser','Carry','Camión','Moto','Van','Otro'];
 const RPT_CATS = ['Tardanza','Conducta inapropiada','Accidente','Incumplimiento','Abandono de puesto','Otro'];
 const REQ_T = {
   entry_change:'Cambio hora de entrada',schedule_swap:'Cambio horario con driver',
@@ -26,32 +32,29 @@ const RL = {admin:'Admin',supervisor:'Supervisor',despacho:'Despacho',aux_despac
 const SL = {pending:'Pendiente',approved:'Aprobada',rejected:'Rechazada',target_accepted:'Aceptada (pend. sup.)',target_rejected:'Rechazada por driver'};
 
 const BASE_POS = {
-  d1:[-17.764,-63.193],d2:[-17.761,-63.190],d3:[-17.763,-63.196],d4:[-17.810,-63.205],
-  d5:[-17.765,-63.192],d6:[-17.808,-63.202],d7:[-17.812,-63.207],d8:[-17.809,-63.200],
+  d1:[-17.764,-63.193],d2:[-17.761,-63.190],d3:[-17.808,-63.205],
+  d4:[-17.810,-63.200],d5:[-17.763,-63.192],
 };
 
 const INIT_USERS = [
-  {id:'a1', name:'Carlos Mendez',  role:'admin',        pin:'0000',sucursalId:'su1',shiftId:null},
-  {id:'sv1',name:'Ana García',      role:'supervisor',   pin:'1111',sucursalId:'su1',shiftId:'m'},
-  {id:'sv2',name:'Roberto Vega',    role:'supervisor',   pin:'1112',sucursalId:'su2',shiftId:'t'},
-  {id:'dp1',name:'María López',     role:'despacho',     pin:'2001',sucursalId:'su1',shiftId:'m'},
-  {id:'dp2',name:'Juan Ríos',       role:'despacho',     pin:'2002',sucursalId:'su1',shiftId:'t'},
-  {id:'dp3',name:'Pablo Cruz',      role:'despacho',     pin:'2003',sucursalId:'su2',shiftId:'n'},
-  {id:'ax1',name:'Lucía Flores',    role:'aux_despacho', pin:'3001',sucursalId:'su1',shiftId:'m'},
-  {id:'ax2',name:'Diego Mora',      role:'aux_despacho', pin:'3002',sucursalId:'su2',shiftId:'t'},
-  {id:'d1', name:'Miguel Torres',  role:'driver',       pin:'1001',sucursalId:'su1',shiftId:'m'},
-  {id:'d2', name:'Luis Ramírez',   role:'driver',       pin:'1002',sucursalId:'su1',shiftId:'m'},
-  {id:'d3', name:'Jorge Vargas',   role:'driver',       pin:'1003',sucursalId:'su1',shiftId:'t'},
-  {id:'d4', name:'Pedro Alvarado', role:'driver',       pin:'1004',sucursalId:'su2',shiftId:'t'},
-  {id:'d5', name:'Roberto Solis',  role:'driver',       pin:'1005',sucursalId:'su1',shiftId:'n'},
-  {id:'d6', name:'David Herrera',  role:'driver',       pin:'1006',sucursalId:'su2',shiftId:'n'},
-  {id:'d7', name:'Carmen Ruiz',    role:'driver',       pin:'1007',sucursalId:'su2',shiftId:'m'},
-  {id:'d8', name:'Sofia Mendez',   role:'driver',       pin:'1008',sucursalId:'su2',shiftId:'t'},
+  {id:'a1', name:'Carlos Mendez',   role:'admin',      pin:'0000',sucursalId:'su1',shiftId:null,category:null},
+  {id:'sv1',name:'Jhonny Danschin', role:'supervisor', pin:'5894',sucursalId:'su1',shiftId:null,category:null},
+  {id:'dp1',name:'Christofer',      role:'despacho',   pin:'1596',sucursalId:'su1',shiftId:'m', category:null},
+  {id:'dp2',name:'Sebastian',       role:'despacho',   pin:'6951',sucursalId:'su1',shiftId:'t', category:null},
+  {id:'dp3',name:'Stojan',          role:'despacho',   pin:'1793',sucursalId:'su2',shiftId:'m', category:null},
+  {id:'dp4',name:'Gerson',          role:'despacho',   pin:'1346',sucursalId:'su2',shiftId:'t', category:null},
+  {id:'d1', name:'Dennis',          role:'driver',     pin:'1784',sucursalId:'su1',shiftId:'m', category:'servicio'},
+  {id:'d2', name:'Carmelo',         role:'driver',     pin:'1287',sucursalId:'su1',shiftId:'t', category:'servicio'},
+  {id:'d3', name:'Garzon',          role:'driver',     pin:'8452',sucursalId:'su2',shiftId:'m', category:'servicio'},
+  {id:'d4', name:'Jorge Gonzales',  role:'driver',     pin:'4343',sucursalId:'su2',shiftId:'t', category:'servicio'},
+  {id:'d5', name:'Rodrigo Claros',  role:'driver',     pin:'3114',sucursalId:'su1',shiftId:'m', category:'farmacorp'},
 ];
 
 // ══ STORAGE ════════════════════════════════════════════════
 // ══ MAPPERS: Supabase (snake_case) → App (camelCase) ══════
-const mapUser =r=>({id:r.id,name:r.name,role:r.role,pin:r.pin,sucursalId:r.sucursal_id,shiftId:r.shift_id});
+const mapUser =r=>({id:r.id,name:r.name,role:r.role,pin:r.pin,sucursalId:r.sucursal_id,shiftId:r.shift_id,category:r.category||'independiente'});
+const mapVA   =r=>({id:r.id,driverId:r.driver_id,vehicle:r.vehicle,detail:r.detail,assignedBy:r.assigned_by,assignedAt:r.assigned_at});
+const mapOT   =r=>({id:r.id,driverId:r.driver_id,date:r.date,startTime:r.start_time,endTime:r.end_time,hours:r.hours,reason:r.reason,status:r.status,createdAt:r.created_at});
 const mapAtt  =r=>({id:r.id,userId:r.user_id,date:r.date,sucursalId:r.sucursal_id,clockIn:r.clock_in,clockOut:r.clock_out,late:r.late||false,lateMin:r.late_min||0});
 const mapReq  =r=>({id:r.id,type:r.type,fromId:r.from_id,toId:r.to_id,supId:r.sup_id,date:r.date,note:r.note,time:r.time,status:r.status,createdAt:r.created_at});
 const mapRep  =r=>({id:r.id,reporterId:r.reporter_id,driverId:r.driver_id,cat:r.cat,detail:r.detail,createdAt:r.created_at});
@@ -138,6 +141,7 @@ const C={
   purple:'#534AB7',purpleBg:'#EEEDFE',gray:'#5F5E5A',grayBg:'#F1EFE8',
 };
 const PC={
+  independiente:['#EAF3DE','#3B6D11'],farmacorp:['#E6F1FB','#185FA5'],servicio:['#EEEDFE','#534AB7'],
   pending:[C.amberBg,C.amber],approved:[C.greenBg,C.green],rejected:[C.redBg,C.red],
   target_accepted:[C.blueBg,C.blue],target_rejected:[C.redBg,C.red],
   working:[C.greenBg,C.green],done:[C.blueBg,C.blue],absent:[C.redBg,C.red],late:[C.redBg,C.red],
@@ -224,7 +228,7 @@ function GanttView({users,daysOff,attendance,singleUser}){
   const now=new Date();const curH=now.getHours()+now.getMinutes()/60;
   const DAY0=4,DAY1=32,SPAN=DAY1-DAY0;
   const getAtt=(uid,d)=>attendance.find(a=>a.userId===uid&&a.date===d);
-  const ticks=[4,6,8,10,12,14,16,18,20,22,0,2,4,6];
+  const ticks=Array.from({length:SPAN+1},(_,i)=>(DAY0+i)%24);
 
   return <div>
     <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:12}}>
@@ -236,8 +240,8 @@ function GanttView({users,daysOff,attendance,singleUser}){
     </div>
 
     {view==='day'&&<div>
-      <div style={{display:'flex',marginLeft:132,marginBottom:4,borderBottom:`0.5px solid ${C.br}`,paddingBottom:3}}>
-        {ticks.map((h,i)=><div key={i} style={{flex:1,textAlign:'center',fontSize:10,color:C.ht}}>{String(h).padStart(2,'0')}h</div>)}
+      <div style={{display:'flex',marginLeft:132,marginBottom:4,borderBottom:`0.5px solid ${C.br}`,paddingBottom:3,overflowX:'hidden'}}>
+        {ticks.map((h,i)=><div key={i} style={{flex:1,textAlign:'center',fontSize:9,color:i%2===0?C.mt:C.br,borderLeft:`0.5px solid ${i%2===0?C.br:C.br+'60'}`,paddingLeft:1}}>{i%2===0?`${String(h).padStart(2,'0')}`:''}</div>)}
       </div>
       {drivers.map(u=>{
         const sh=SHIFTS.find(s=>s.id===u.shiftId);if(!sh)return null;
@@ -333,58 +337,77 @@ function GanttView({users,daysOff,attendance,singleUser}){
 
 // ══ MAP ════════════════════════════════════════════════════
 function MapView({users,locations,attendance,highlightId}){
-  const W=520,H=340,minLat=-17.830,maxLat=-17.750,minLng=-63.225,maxLng=-63.165;
-  const xy=(lat,lng)=>({x:((lng-minLng)/(maxLng-minLng))*W,y:((maxLat-lat)/(maxLat-minLat))*H});
-  const drivers=users.filter(u=>u.role==='driver');
+  const ref=useRef(null);
+  const mapRef=useRef(null);
+  const markersRef=useRef({});
   const now=new Date().toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'});
 
-  return <div style={{border:`0.5px solid ${C.br}`,borderRadius:12,overflow:'hidden',background:C.bg1}}>
-    <div style={{padding:'10px 16px',borderBottom:`0.5px solid ${C.br}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-      <span style={{fontSize:13,fontWeight:500,color:C.tx}}>Rastreo GPS en vivo</span>
-      <span style={{fontSize:11,color:C.ht}}>Actualiza c/5 min · {now}</span>
+  useEffect(()=>{
+    if(mapRef.current||!ref.current)return;
+    if(!window.L){
+      // Load Leaflet dynamically
+      const css=document.createElement('link');css.rel='stylesheet';
+      css.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';document.head.appendChild(css);
+      const js=document.createElement('script');js.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+      js.onload=()=>initMap();document.head.appendChild(js);
+    } else { initMap(); }
+    function initMap(){
+      mapRef.current=window.L.map(ref.current,{zoomControl:true}).setView([-17.789,-63.197],13);
+      window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+        attribution:'© <a href="https://openstreetmap.org">OpenStreetMap</a>',maxZoom:18
+      }).addTo(mapRef.current);
+      // Sucursal zones
+      SUCS.forEach(s=>{
+        window.L.circle([s.lat,s.lng],{radius:1000,color:s.color,fillColor:s.color,fillOpacity:.08,weight:2,dashArray:'6,4'})
+          .addTo(mapRef.current).bindPopup(`<b>${s.name}</b>`);
+        window.L.marker([s.lat,s.lng],{icon:window.L.divIcon({className:'',html:`<div style="background:${s.color};color:#fff;padding:4px 8px;border-radius:6px;font-size:11px;font-weight:600;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.3)">${s.name}</div>`,iconAnchor:[0,0]})}).addTo(mapRef.current);
+      });
+    }
+    return()=>{if(mapRef.current){mapRef.current.remove();mapRef.current=null;}};
+  },[]);
+
+  useEffect(()=>{
+    if(!mapRef.current||!window.L)return;
+    const drivers=users.filter(u=>u.role==='driver');
+    // Clear old markers
+    Object.values(markersRef.current).forEach(m=>m.remove());
+    markersRef.current={};
+    drivers.forEach(u=>{
+      const loc=locations.find(l=>l.userId===u.id);if(!loc)return;
+      const sh=SHIFTS.find(s=>s.id===u.shiftId);
+      const cat=CATEGORIES[u.category];
+      const color=loc.active?(sh?.color||'#888'):'#aaa';
+      const m=window.L.circleMarker([loc.lat,loc.lng],{
+        radius:u.id===highlightId?12:8,
+        fillColor:color,color:'#fff',weight:2,fillOpacity:loc.active?.9:.3,
+      }).addTo(mapRef.current);
+      m.bindPopup(`<div style="font-family:sans-serif;min-width:140px">
+        <b style="font-size:13px">${u.name}</b><br>
+        <span style="color:#666;font-size:11px">${sh?.label||''} · ${cat?.label||''}</span><br>
+        <span style="font-size:12px;color:${loc.active?'#3B6D11':'#999'}">${loc.active?'● Activo':'○ Sin entrada'}</span>
+      </div>`);
+      markersRef.current[u.id]=m;
+    });
+  },[locations,users]);
+
+  return <div style={{border:`0.5px solid ${C.br}`,borderRadius:12,overflow:'hidden'}}>
+    <div style={{padding:'10px 16px',borderBottom:`0.5px solid ${C.br}`,display:'flex',justifyContent:'space-between',alignItems:'center',background:C.bg2}}>
+      <span style={{fontSize:13,fontWeight:500,color:C.tx}}>Mapa en vivo · OpenStreetMap</span>
+      <span style={{fontSize:11,color:C.ht}}>actualiza c/5 min · {now}</span>
     </div>
-    <svg viewBox={`0 0 ${W} ${H}`} style={{width:'100%',display:'block'}}>
-      {/* Grid */}
-      {[0,1,2,3,4,5].map(i=><line key={`h${i}`} x1={0} y1={i*H/5} x2={W} y2={i*H/5} stroke={C.br} strokeWidth={0.5}/>)}
-      {[0,1,2,3,4,5,6].map(i=><line key={`v${i}`} x1={i*W/6} y1={0} x2={i*W/6} y2={H} stroke={C.br} strokeWidth={0.5}/>)}
-      {/* Sucursales */}
-      {SUCS.map(s=>{const{x,y}=xy(s.lat,s.lng);return <g key={s.id}>
-        <circle cx={x} cy={y} r={22} fill={s.color+'20'} stroke={s.color} strokeWidth={1.5} strokeDasharray="4,2"/>
-        <text x={x} y={y-2} textAnchor="middle" dominantBaseline="central" fontSize={10} fill={s.color} fontWeight={700}>{s.name.split(' ').map(w=>w[0]).join('')}</text>
-        <text x={x} y={y+30} textAnchor="middle" fontSize={10} fill={s.color} fontWeight={500}>{s.name}</text>
-      </g>;})}
-      {/* Drivers */}
-      {drivers.map(u=>{
-        const loc=locations.find(l=>l.userId===u.id);if(!loc)return null;
-        const{x,y}=xy(loc.lat,loc.lng);
-        const sh=SHIFTS.find(s=>s.id===u.shiftId);const color=sh?.color||C.mt;
-        const isMe=u.id===highlightId;const active=loc.active;
-        const att=attendance.find(a=>a.userId===u.id&&a.date===TODAY);
-        return <g key={u.id}>
-          {isMe&&<circle cx={x} cy={y} r={16} fill={color+'25'}><animate attributeName="r" values="10;18;10" dur="2s" repeatCount="indefinite"/></circle>}
-          <circle cx={x} cy={y} r={7} fill={active?color:C.bg2} stroke={color} strokeWidth={1.5} opacity={active?1:.5}/>
-          {att?.late&&<circle cx={x+6} cy={y-6} r={4} fill={C.red}/>}
-          <text x={x} y={y+17} textAnchor="middle" fontSize={10} fill={color} opacity={active?1:.6}>{u.name.split(' ')[0]}</text>
-        </g>;
-      })}
-    </svg>
-    <div style={{padding:'8px 16px',borderTop:`0.5px solid ${C.br}`,display:'flex',gap:14,flexWrap:'wrap'}}>
+    <div ref={ref} style={{height:400}}/>
+    <div style={{padding:'8px 16px',borderTop:`0.5px solid ${C.br}`,display:'flex',gap:14,flexWrap:'wrap',background:C.bg2}}>
       {SHIFTS.map(s=><div key={s.id} style={{display:'flex',alignItems:'center',gap:4}}>
-        <div style={{width:8,height:8,borderRadius:'50%',background:s.color}}/>
+        <div style={{width:10,height:10,borderRadius:'50%',background:s.color,border:'2px solid #fff',boxShadow:`0 0 0 1px ${s.color}`}}/>
         <span style={{fontSize:11,color:C.mt}}>{s.label}</span>
       </div>)}
       <div style={{display:'flex',alignItems:'center',gap:4}}>
-        <div style={{width:8,height:8,borderRadius:'50%',background:C.bg2,border:`1.5px solid ${C.mt}`}}/>
+        <div style={{width:10,height:10,borderRadius:'50%',background:'#aaa'}}/>
         <span style={{fontSize:11,color:C.mt}}>Sin entrada</span>
-      </div>
-      <div style={{display:'flex',alignItems:'center',gap:4}}>
-        <div style={{width:8,height:8,borderRadius:'50%',background:C.red}}/>
-        <span style={{fontSize:11,color:C.mt}}>Con tardanza</span>
       </div>
     </div>
   </div>;
 }
-
 // ══ HISTORY VIEW ══════════════════════════════════════════
 function HistoryView({users,attendance,daysOff,onExport}){
   const[date,setDate]=useState(TODAY);
@@ -503,7 +526,7 @@ function LoginView({users,onLogin}){
             <div style={{display:'flex',flexDirection:'column',gap:8}}>
               {us.map(u=><Card key={u.id} onClick={()=>{setSel(u);setPin('');setErr('');}} style={{padding:'12px 16px',display:'flex',alignItems:'center',gap:12}}>
                 <Av name={u.name} size={36}/>
-                <div style={{flex:1}}><div style={{fontSize:14,fontWeight:500,color:C.tx}}>{u.name}</div><div style={{fontSize:12,color:C.mt,fontFamily:'var(--font-mono)'}}>PIN: {u.pin}</div></div>
+                <div style={{flex:1}}><div style={{fontSize:14,fontWeight:500,color:C.tx}}>{u.name}</div><div style={{fontSize:12,color:C.mt}}>{CATEGORIES[u.category]?.label||''}</div></div>
                 <Pill s={u.role} label={RL[u.role]}/>
               </Card>)}
             </div>
@@ -565,19 +588,23 @@ function ReqCard({r,users,canApprove,canAcceptTarget,myId,onApprove,onAccept}){
 }
 
 // ══ DRIVER VIEW ════════════════════════════════════════════
-function DriverView({me,users,daysOff,attendance,requests,notifications,locations,onClock,onAddReq,onAccept,onMarkRead,onChangePin,onLogout}){
+function DriverView({me,users,daysOff,attendance,requests,notifications,locations,overtime,onClock,onAddReq,onAccept,onAddOvertime,onMarkRead,onChangePin,onLogout}){
   const[tab,setTab]=useState('home');
   const[modal,setModal]=useState(null);
   const[pinModal,setPinModal]=useState(false);
+  const[otModal,setOTModal]=useState(false);
+  const[otForm,setOTForm]=useState({date:TODAY,startTime:'',endTime:'',reason:''});
   const[rf,setRf]=useState({type:'entry_change',note:'',time:'',date:TODAY,targetId:''});
   const myAtt=attendance.find(a=>a.userId===me.id&&a.date===TODAY);
   const isW=myAtt?.clockIn&&!myAtt?.clockOut;const isDone=myAtt?.clockIn&&myAtt?.clockOut;
   const sh=SHIFTS.find(s=>s.id===me.shiftId);const suc=SUCS.find(s=>s.id===me.sucursalId);
   const myOff=isOff(me.id,TODAY,daysOff);
   const drivers=users.filter(u=>u.role==='driver'&&u.id!==me.id);
+  const sameCategory=drivers.filter(u=>u.category===me.category);
   const incomingP=requests.filter(r=>r.toId===me.id&&r.status==='pending');
   const unread=notifications.filter(n=>n.userId===me.id&&!n.read).length;
   const needTarget=['schedule_swap','dayoff_swap','relief'].includes(rf.type);
+  const targetDrivers=needTarget?sameCategory:drivers;
   const supervisors=users.filter(u=>u.role==='supervisor');
   const myHistory=attendance.filter(a=>a.userId===me.id).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,21);
   const myStats=getMonthStats(me.id,attendance);
@@ -588,7 +615,9 @@ function DriverView({me,users,daysOff,attendance,requests,notifications,location
     setModal(null);setRf({type:'entry_change',note:'',time:'',date:TODAY,targetId:''});
   }
 
-  const tabItems=[{id:'home',label:'Inicio'},{id:'semana',label:'Mi semana'},{id:'historial',label:'Mi historial'},{id:'mapa',label:'Mapa'},{id:'requests',label:`Solicitudes${incomingP.length?` (${incomingP.length})`:''}`},{id:'notifs',label:`Notif.${unread?` (${unread})`:''}`}];
+  const canOvertime=['servicio','farmacorp'].includes(me.category);
+  const myOT=overtime.filter(r=>r.driverId===me.id);
+  const tabItems=[{id:'home',label:'Inicio'},{id:'semana',label:'Mi semana'},{id:'historial',label:'Mi historial'},{id:'mapa',label:'Mapa'},{id:'requests',label:`Solicitudes${incomingP.length?` (${incomingP.length})`:''}`},...(canOvertime?[{id:'extras',label:`H. Extras${myOT.filter(r=>r.status==='pending').length?` (${myOT.filter(r=>r.status==='pending').length})`:''}`}]:[]),{id:'notifs',label:`Notif.${unread?` (${unread})`:''}`}];
 
   return <div style={{maxWidth:540,margin:'0 auto',padding:20,minHeight:'100vh',background:C.bg0}}>
     <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:24}}>
@@ -674,13 +703,50 @@ function DriverView({me,users,daysOff,attendance,requests,notifications,location
       :requests.filter(r=>r.fromId===me.id).reverse().map(r=><ReqCard key={r.id} r={r} users={users} myId={me.id}/>)}
     </div>}
 
+    {tab==='extras'&&canOvertime&&<div>
+      <Btn v="primary" full onClick={()=>setOTModal(true)} style={{marginBottom:16}}>Registrar horas extras</Btn>
+      {myOT.length===0?<Card><div style={{color:C.ht}}>Sin registros de horas extras</div></Card>
+      :myOT.map(r=><Card key={r.id} style={{marginBottom:8}}>
+        <div style={{display:'flex',justifyContent:'space-between',marginBottom:4}}>
+          <div style={{fontSize:14,fontWeight:500,color:C.tx}}>{r.date}</div>
+          <Pill s={r.status} label={{pending:'Pendiente',approved:'Aprobadas',rejected:'Rechazadas'}[r.status]||r.status}/>
+        </div>
+        <div style={{fontSize:13,color:C.mt}}>{r.startTime} – {r.endTime} · <b style={{color:C.amber}}>{r.hours}h</b></div>
+        {r.reason&&<div style={{fontSize:12,color:C.tx,marginTop:4}}>{r.reason}</div>}
+      </Card>)}
+    </div>}
+
     {tab==='notifs'&&<NotifPanel notifs={notifications} userId={me.id} onMarkRead={onMarkRead}/>}
+
+    <Modal open={otModal} onClose={()=>setOTModal(false)} title="Registrar horas extras">
+      <div style={{fontSize:13,color:C.mt,marginBottom:14}}>Solo disponible para Servicio y Farmacorp. El supervisor debe aprobar.</div>
+      <Fld label="Fecha" type="date" value={otForm.date} onChange={v=>setOTForm(f=>({...f,date:v}))}/>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+        <Fld label="Hora inicio" type="time" value={otForm.startTime} onChange={v=>setOTForm(f=>({...f,startTime:v}))}/>
+        <Fld label="Hora fin" type="time" value={otForm.endTime} onChange={v=>setOTForm(f=>({...f,endTime:v}))}/>
+      </div>
+      {otForm.startTime&&otForm.endTime&&<div style={{marginBottom:14,padding:'10px 12px',background:C.amberBg,borderRadius:8,fontSize:13,color:C.amber,fontWeight:500}}>
+        Total: {(()=>{const[sh,sm]=otForm.startTime.split(':').map(Number);const[eh,em]=otForm.endTime.split(':').map(Number);let h=eh+em/60-sh-sm/60;if(h<=0)h+=24;return h.toFixed(1);})()}h extras
+      </div>}
+      <Fld label="Motivo (requerido)" value={otForm.reason} onChange={v=>setOTForm(f=>({...f,reason:v}))} placeholder="Explica por qué se necesitan horas extras..." rows={3}/>
+      <div style={{display:'flex',gap:10}}>
+        <Btn onClick={()=>setOTModal(false)} v="outline">Cancelar</Btn>
+        <Btn onClick={()=>{
+          if(!otForm.startTime||!otForm.endTime||!otForm.reason)return;
+          const[sh,sm]=otForm.startTime.split(':').map(Number);
+          const[eh,em]=otForm.endTime.split(':').map(Number);
+          let h=eh+em/60-sh-sm/60;if(h<=0)h+=24;
+          onAddOvertime({driverId:me.id,date:otForm.date,startTime:otForm.startTime,endTime:otForm.endTime,hours:parseFloat(h.toFixed(2)),reason:otForm.reason});
+          setOTModal(false);setOTForm({date:TODAY,startTime:'',endTime:'',reason:''});
+        }} v="primary" full disabled={!otForm.startTime||!otForm.endTime||!otForm.reason}>Enviar solicitud</Btn>
+      </div>
+    </Modal>
 
     <Modal open={modal==='req'} onClose={()=>setModal(null)} title="Nueva solicitud">
       <Fld label="Tipo" value={rf.type} onChange={v=>setRf(f=>({...f,type:v,targetId:'',note:'',time:''}))} options={Object.entries(REQ_T).map(([v,l])=>({v,l}))}/>
       <Fld label="Fecha" type="date" value={rf.date} onChange={v=>setRf(f=>({...f,date:v}))}/>
       {rf.type==='entry_change'&&<Fld label="Nueva hora de entrada" value={rf.time} onChange={v=>setRf(f=>({...f,time:v}))} placeholder="ej: 08:00"/>}
-      {needTarget&&<Fld label="Driver" value={rf.targetId} onChange={v=>setRf(f=>({...f,targetId:v}))} options={[{v:'',l:'-- Seleccionar --'},...drivers.map(u=>({v:u.id,l:u.name}))]}/>}
+      {needTarget&&<Fld label={`Driver (${CATEGORIES[me.category]?.label})`} value={rf.targetId} onChange={v=>setRf(f=>({...f,targetId:v}))} options={[{v:'',l:'-- Seleccionar --'},...targetDrivers.map(u=>({v:u.id,l:u.name}))]}/>}
       <Fld label="Motivo" value={rf.note} onChange={v=>setRf(f=>({...f,note:v}))} placeholder="Explica el motivo..." rows={3}/>
       <div style={{display:'flex',gap:10}}>
         <Btn onClick={()=>setModal(null)} v="outline">Cancelar</Btn>
@@ -692,25 +758,30 @@ function DriverView({me,users,daysOff,attendance,requests,notifications,location
 }
 
 // ══ DESPACHO VIEW ══════════════════════════════════════════
-function DespachoView({me,users,daysOff,attendance,requests,reports,notifications,locations,notes,alerts,onApprove,onAddReport,onAddNote,onDeleteNote,onMarkRead,onChangePin,onLogout}){
+function DespachoView({me,users,daysOff,attendance,requests,reports,notifications,locations,notes,alerts,vehicleAssignments,onApprove,onAddReport,onAssignVehicle,onRemoveVehicle,updateUsers,onAddNote,onDeleteNote,onMarkRead,onChangePin,onLogout}){
   const[tab,setTab]=useState('dashboard');
   const[pinModal,setPinModal]=useState(false);
   const[rpModal,setRpModal]=useState(false);
   const[rpForm,setRpForm]=useState({driverId:'',cat:RPT_CATS[0],detail:''});
-  const drivers=users.filter(u=>u.role==='driver');
+  const[vModal,setVModal]=useState(false);
+  const[vForm,setVForm]=useState({driverId:'',vehicle:VEHICLES[0],detail:''});
+  const[addDrvModal,setAddDrvModal]=useState(false);
+  const[drvForm,setDrvForm]=useState({name:'',pin:'',category:'independiente',sucursalId:'su1',shiftId:'m'});
+  const allDrivers=users.filter(u=>u.role==='driver');
+  const drivers=allDrivers.filter(u=>u.sucursalId===me.sucursalId); // Despacho: solo su sucursal
   const getAtt=id=>attendance.find(a=>a.userId===id&&a.date===TODAY);
   const working=drivers.filter(u=>{const a=getAtt(u.id);return a?.clockIn&&!a?.clockOut;});
   const done=drivers.filter(u=>{const a=getAtt(u.id);return a?.clockIn&&a?.clockOut;});
   const offs=drivers.filter(u=>isOff(u.id,TODAY,daysOff));
   const absent=drivers.filter(u=>!getAtt(u.id)?.clockIn&&!isOff(u.id,TODAY,daysOff));
-  const lateToday=attendance.filter(a=>a.date===TODAY&&a.late);
+  const lateToday=attendance.filter(a=>a.date===TODAY&&a.late&&drivers.some(d=>d.id===a.userId));
   const pendingReqs=requests.filter(r=>r.status==='pending'&&['entry_change','shift_change'].includes(r.type));
   const unread=notifications.filter(n=>n.userId===me.id&&!n.read).length;
   const suc=SUCS.find(s=>s.id===me.sucursalId);
 
   function submitReport(){onAddReport({...rpForm,reporterId:me.id});setRpModal(false);setRpForm({driverId:'',cat:RPT_CATS[0],detail:''});}
 
-  const tabItems=[{id:'dashboard',label:'Dashboard'},{id:'planner',label:'Planificador'},{id:'mapa',label:'Mapa'},{id:'historial',label:'Historial'},{id:'requests',label:`Aprobar${pendingReqs.length?` (${pendingReqs.length})`:''}`},{id:'notifs',label:`Notif.${unread?` (${unread})`:''}`}];
+  const tabItems=[{id:'dashboard',label:'Dashboard'},{id:'vehiculos',label:`Vehículos${vehicleAssignments.length?` (${vehicleAssignments.length})`:''}`},{id:'planner',label:'Planificador'},{id:'mapa',label:'Mapa'},{id:'historial',label:'Historial'},{id:'requests',label:`Aprobar${pendingReqs.length?` (${pendingReqs.length})`:''}`},{id:'notifs',label:`Notif.${unread?` (${unread})`:''}`}];
 
   return <div style={{maxWidth:700,margin:'0 auto',padding:20,minHeight:'100vh',background:C.bg0}}>
     <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:24}}>
@@ -718,6 +789,8 @@ function DespachoView({me,users,daysOff,attendance,requests,reports,notification
         <div style={{fontSize:13,color:C.mt}}>Despacho · {suc?.name} · {SHIFTS.find(s=>s.id===me.shiftId)?.label}</div></div>
       <div style={{display:'flex',gap:6,alignItems:'center',flexWrap:'wrap',justifyContent:'flex-end'}}>
         <Bell notifs={notifications} userId={me.id} onClick={()=>setTab('notifs')}/>
+        <Btn v="outline" size="sm" onClick={()=>setVModal(true)}>+ Vehículo</Btn>
+        <Btn v="success" size="sm" onClick={()=>setAddDrvModal(true)}>+ Driver</Btn>
         <Btn v="danger" size="sm" onClick={()=>setRpModal(true)}>Reportar driver</Btn>
         <Btn v="outline" size="sm" onClick={()=>setPinModal(true)}>PIN</Btn>
         <Btn v="ghost" size="sm" onClick={onLogout}>Salir</Btn>
@@ -745,7 +818,7 @@ function DespachoView({me,users,daysOff,attendance,requests,reports,notification
         return <Card key={u.id} style={{marginBottom:8,display:'flex',alignItems:'center',gap:12}}>
           <div style={{width:8,height:8,borderRadius:'50%',background:C.green,flexShrink:0}}/>
           <Av name={u.name} size={32}/>
-          <div style={{flex:1}}><div style={{fontSize:14,fontWeight:500,color:C.tx}}>{u.name}</div><div style={{fontSize:12,color:C.mt}}>{suc?.name} · {sh?.label}</div></div>
+          <div style={{flex:1}}><div style={{fontSize:14,fontWeight:500,color:C.tx}}>{u.name}</div><div style={{fontSize:12,color:C.mt}}>{suc?.name} · {sh?.label}</div>{vehicleAssignments?.find(v=>v.driverId===u.id)&&<div style={{fontSize:11,color:C.amber,marginTop:2}}>🚗 {vehicleAssignments.find(v=>v.driverId===u.id)?.vehicle}</div>}</div>
           <div style={{textAlign:'right'}}>
             <div style={{fontSize:12,color:C.green}}>Desde {fmtT(a?.clockIn)}</div>
             {a?.late&&<Pill s="late" label={`Tarde ${a.lateMin}min`}/>}
@@ -763,6 +836,19 @@ function DespachoView({me,users,daysOff,attendance,requests,reports,notification
       <DayNotes notes={notes} users={users} me={me} onAdd={onAddNote} onDelete={onDeleteNote}/>
     </div>}
 
+    {tab==='vehiculos'&&<div>
+      <Hdr>Vehículos asignados actualmente</Hdr>
+      {vehicleAssignments.length===0?<Card><div style={{color:C.ht}}>Sin vehículos asignados</div></Card>
+      :vehicleAssignments.map(va=>{const drv=users.find(u=>u.id===va.driverId);const cat=CATEGORIES[drv?.category];return <Card key={va.id} style={{marginBottom:10,display:'flex',alignItems:'center',gap:12}}>
+        <div style={{width:40,height:40,borderRadius:8,background:C.amberBg,display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0}}>🚗</div>
+        <div style={{flex:1}}>
+          <div style={{fontSize:14,fontWeight:500,color:C.tx}}>{drv?.name}</div>
+          <div style={{fontSize:13,color:C.mt,fontWeight:500}}>{va.vehicle}{va.detail?` · ${va.detail}`:''}</div>
+          {cat&&<Pill s={drv?.category} label={cat.label}/>}
+        </div>
+        <Btn v="danger" size="sm" onClick={()=>onRemoveVehicle(va.id)}>Quitar</Btn>
+      </Card>;})}
+    </div>}
     {tab==='planner'&&<Card><GanttView users={users} daysOff={daysOff} attendance={attendance}/></Card>}
     {tab==='mapa'&&<MapView users={users} locations={locations} attendance={attendance}/>}
     {tab==='historial'&&<HistoryView users={users} attendance={attendance} daysOff={daysOff} onExport={()=>exportCSV(attendance,users)}/>}
@@ -788,11 +874,33 @@ function DespachoView({me,users,daysOff,attendance,requests,reports,notification
       </div>
     </Modal>
     <PinModal open={pinModal} onClose={()=>setPinModal(false)} user={me} onSave={pin=>onChangePin(me.id,pin)}/>
+
+    <Modal open={vModal} onClose={()=>setVModal(false)} title="Asignar vehículo a driver">
+      <Fld label="Driver" value={vForm.driverId} onChange={v=>setVForm(f=>({...f,driverId:v}))} options={[{v:'',l:'-- Seleccionar driver --'},...drivers.map(u=>({v:u.id,l:`${u.name} (${CATEGORIES[u.category]?.label})`}))]}/>
+      <Fld label="Vehículo" value={vForm.vehicle} onChange={v=>setVForm(f=>({...f,vehicle:v}))} options={VEHICLES.map(v=>({v,l:v}))}/>
+      <Fld label="Detalle (opcional)" value={vForm.detail} onChange={v=>setVForm(f=>({...f,detail:v}))} placeholder="ej: 1 Linkser, 3 cajas..."/>
+      <div style={{display:'flex',gap:10}}>
+        <Btn onClick={()=>setVModal(false)} v="outline">Cancelar</Btn>
+        <Btn onClick={()=>{if(vForm.driverId){onAssignVehicle(vForm.driverId,vForm.vehicle,vForm.detail);setVModal(false);setVForm({driverId:'',vehicle:VEHICLES[0],detail:''});}}} v="primary" full disabled={!vForm.driverId}>Asignar</Btn>
+      </div>
+    </Modal>
+
+    <Modal open={addDrvModal} onClose={()=>setAddDrvModal(false)} title="Registrar nuevo driver">
+      <Fld label="Nombre completo" value={drvForm.name} onChange={v=>setDrvForm(f=>({...f,name:v}))} placeholder="Nombre Apellido"/>
+      <Fld label="PIN" value={drvForm.pin} onChange={v=>setDrvForm(f=>({...f,pin:v}))} placeholder="ej: 1009"/>
+      <Fld label="Categoría" value={drvForm.category} onChange={v=>setDrvForm(f=>({...f,category:v}))} options={Object.entries(CATEGORIES).map(([v,c])=>({v,l:c.label}))}/>
+      <Fld label="Sucursal" value={drvForm.sucursalId} onChange={v=>setDrvForm(f=>({...f,sucursalId:v}))} options={SUCS.map(s=>({v:s.id,l:s.name}))}/>
+      <Fld label="Turno" value={drvForm.shiftId} onChange={v=>setDrvForm(f=>({...f,shiftId:v}))} options={SHIFTS.map(s=>({v:s.id,l:s.name}))}/>
+      <div style={{display:'flex',gap:10}}>
+        <Btn onClick={()=>setAddDrvModal(false)} v="outline">Cancelar</Btn>
+        <Btn onClick={()=>{if(drvForm.name&&drvForm.pin){updateUsers(p=>[...p,{id:uid(),role:'driver',...drvForm}]);setAddDrvModal(false);setDrvForm({name:'',pin:'',category:'independiente',sucursalId:'su1',shiftId:'m'});}}} v="primary" full disabled={!drvForm.name||!drvForm.pin}>Registrar</Btn>
+      </div>
+    </Modal>
   </div>;
 }
 
 // ══ SUPERVISOR VIEW ════════════════════════════════════════
-function SupervisorView({me,users,daysOff,setDaysOff,attendance,requests,reports,notifications,locations,notes,alerts,onApprove,onAccept,onAddNote,onDeleteNote,onMarkRead,onChangePin,onLogout}){
+function SupervisorView({me,users,daysOff,setDaysOff,attendance,requests,reports,notifications,locations,notes,alerts,vehicleAssignments,overtime,onApprove,onAccept,onAddNote,onDeleteNote,onMarkRead,onChangePin,updateUsers,onLogout}){
   const[tab,setTab]=useState('dashboard');
   const[pinModal,setPinModal]=useState(false);
   const[doModal,setDoModal]=useState(false);
@@ -816,7 +924,9 @@ function SupervisorView({me,users,daysOff,setDaysOff,attendance,requests,reports
     setDaysOff(p=>[...p,e]);setDoModal(false);
   }
 
-  const tabItems=[{id:'dashboard',label:'Dashboard'},{id:'planner',label:'Planificador'},{id:'mapa',label:'Mapa'},{id:'historial',label:'Historial'},{id:'horas',label:'Horas'},{id:'requests',label:`Solicitudes${allPending.length?` (${allPending.length})`:''}`},{id:'daysoff',label:'Libres'},{id:'reportes',label:`Reportes${reports.length+complaints.length>0?` (${reports.length+complaints.length})`:''}`},{id:'notifs',label:`Notif.${unread?` (${unread})`:''}`}];
+  const[supModal,setSupModal]=useState(null);const[supEu,setSupEu]=useState(null);const[supForm,setSupForm]=useState({});
+  const otPending=overtime.filter(r=>r.status==='pending');
+  const tabItems=[{id:'dashboard',label:'Dashboard'},{id:'usuarios',label:'Usuarios'},{id:'planner',label:'Planificador'},{id:'mapa',label:'Mapa'},{id:'historial',label:'Historial'},{id:'horas',label:'Horas'},{id:'extras',label:`H. Extras${otPending.length?` (${otPending.length})`:''}`},{id:'requests',label:`Solicitudes${allPending.length?` (${allPending.length})`:''}`},{id:'daysoff',label:'Libres'},{id:'reportes',label:`Reportes${reports.length+complaints.length>0?` (${reports.length+complaints.length})`:''}`},{id:'notifs',label:`Notif.${unread?` (${unread})`:''}`}];
 
   return <div style={{maxWidth:720,margin:'0 auto',padding:20,minHeight:'100vh',background:C.bg0}}>
     <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:24}}>
@@ -830,11 +940,31 @@ function SupervisorView({me,users,daysOff,setDaysOff,attendance,requests,reports
     <Tabs items={tabItems} active={tab} onChange={setTab}/>
 
     {tab==='dashboard'&&<div>
-      <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:12,marginBottom:16}}>
-        <Stat label="Trabajando ahora" value={working.length} v="green"/>
-        <Stat label="Dias libres hoy" value={offs.length} v="gray"/>
+      {/* Stats summary */}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:10,marginBottom:16}}>
+        <Stat label="Personal total" value={drivers.length} v="neutral"/>
+        <Stat label="Activos ahora" value={working.length} v="green"/>
+        <Stat label="Disponibles hoy" value={drivers.length-offs.length} v="blue"/>
+        <Stat label="Dias libres" value={offs.length} v="gray"/>
         <Stat label="Faltas" value={absent.length} v="red"/>
-        <Stat label="Solicitudes pend." value={allPending.length} v="amber"/>
+        <Stat label="Solicitudes" value={allPending.length} v="amber"/>
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8,marginBottom:16}}>
+        <div style={{background:C.purpleBg,borderRadius:8,padding:'10px 12px',border:`0.5px solid ${C.br}`}}>
+          <div style={{fontSize:11,color:C.purple,fontWeight:500,marginBottom:2}}>Independientes</div>
+          <div style={{fontSize:20,fontWeight:500,color:C.purple}}>{drivers.filter(u=>u.category==='independiente'&&getAtt(u.id)?.clockIn&&!getAtt(u.id)?.clockOut).length}</div>
+          <div style={{fontSize:10,color:C.purple,opacity:.7}}>activos</div>
+        </div>
+        <div style={{background:C.blueBg,borderRadius:8,padding:'10px 12px',border:`0.5px solid ${C.br}`}}>
+          <div style={{fontSize:11,color:C.blue,fontWeight:500,marginBottom:2}}>Servicio</div>
+          <div style={{fontSize:20,fontWeight:500,color:C.blue}}>{drivers.filter(u=>u.category==='servicio'&&getAtt(u.id)?.clockIn&&!getAtt(u.id)?.clockOut).length}</div>
+          <div style={{fontSize:10,color:C.blue,opacity:.7}}>activos</div>
+        </div>
+        <div style={{background:C.amberBg,borderRadius:8,padding:'10px 12px',border:`0.5px solid ${C.br}`}}>
+          <div style={{fontSize:11,color:C.amber,fontWeight:500,marginBottom:2}}>Farmacorp</div>
+          <div style={{fontSize:20,fontWeight:500,color:C.amber}}>{drivers.filter(u=>u.category==='farmacorp'&&getAtt(u.id)?.clockIn&&!getAtt(u.id)?.clockOut).length}</div>
+          <div style={{fontSize:10,color:C.amber,opacity:.7}}>activos</div>
+        </div>
       </div>
       {(lateToday.length>0||noShowAlerts.length>0)&&<div style={{marginBottom:16}}>
         <Hdr>Alertas</Hdr>
@@ -860,11 +990,59 @@ function SupervisorView({me,users,daysOff,setDaysOff,attendance,requests,reports
       <DayNotes notes={notes} users={users} me={me} onAdd={onAddNote} onDelete={onDeleteNote}/>
     </div>}
 
+    {tab==='usuarios'&&<div>
+      <Btn onClick={()=>{setSupEu(null);setSupForm({name:'',pin:'',role:'driver',category:'independiente',sucursalId:SUCS[0].id,shiftId:'m'});setSupModal('user');}} v="primary" style={{marginBottom:16}}>+ Agregar usuario</Btn>
+      {['driver','despacho','aux_despacho'].map(role=>{
+        const us=users.filter(u=>u.role===role);if(!us.length)return null;
+        return <div key={role} style={{marginBottom:20}}>
+          <Hdr>{RL[role]}</Hdr>
+          {us.map(u=>{const suc=SUCS.find(s=>s.id===u.sucursalId);const sh=SHIFTS.find(s=>s.id===u.shiftId);const cat=CATEGORIES[u.category];
+            return <Card key={u.id} style={{marginBottom:8,display:'flex',alignItems:'center',gap:12}}>
+              <Av name={u.name} size={34}/>
+              <div style={{flex:1}}><div style={{fontSize:14,fontWeight:500,color:C.tx}}>{u.name}</div>
+                <div style={{fontSize:12,color:C.mt}}>{suc?.name}{sh?` · ${sh.label}`:''}</div>
+                {cat&&<Pill s={u.category} label={cat.label}/>}
+              </div>
+              <div style={{display:'flex',gap:8}}>
+                <Btn v="outline" size="sm" onClick={()=>{setSupEu(u);setSupForm({name:u.name,pin:u.pin,role:u.role,category:u.category||'independiente',sucursalId:u.sucursalId,shiftId:u.shiftId});setSupModal('user');}}>Editar</Btn>
+              </div>
+            </Card>;
+          })}
+        </div>;
+      })}
+    </div>}
     {tab==='planner'&&<Card><GanttView users={users} daysOff={daysOff} attendance={attendance}/></Card>}
     {tab==='mapa'&&<MapView users={users} locations={locations} attendance={attendance}/>}
     {tab==='historial'&&<HistoryView users={users} attendance={attendance} daysOff={daysOff} onExport={()=>exportCSV(attendance,users)}/>}
     {tab==='horas'&&<HoursSummary users={users} attendance={attendance}/>}
 
+    {tab==='extras'&&<div>
+      <Hdr>Solicitudes de horas extras pendientes</Hdr>
+      {otPending.length===0?<Card style={{marginBottom:12}}><div style={{color:C.ht}}>Sin horas extras pendientes</div></Card>
+      :otPending.map(r=>{const drv=users.find(u=>u.id===r.driverId);const cat=CATEGORIES[drv?.category];return <Card key={r.id} style={{marginBottom:10,borderLeft:`3px solid ${C.amber}`}}>
+        <div style={{display:'flex',justifyContent:'space-between',marginBottom:6}}>
+          <div style={{fontSize:14,fontWeight:500,color:C.tx}}>{drv?.name}</div>
+          <Pill s="pending" label="Pendiente"/>
+        </div>
+        {cat&&<div style={{marginBottom:4}}><Pill s={drv?.category} label={cat.label}/></div>}
+        <div style={{fontSize:13,color:C.mt,marginBottom:4}}>{r.date} · {r.startTime} – {r.endTime} · <b style={{color:C.amber}}>{r.hours}h extras</b></div>
+        {r.reason&&<div style={{fontSize:13,color:C.tx,padding:'8px 10px',background:C.bg1,borderRadius:8,marginBottom:10}}>{r.reason}</div>}
+        <div style={{display:'flex',gap:8}}>
+          <Btn v="danger" size="sm" onClick={()=>onApproveOT(r.id,'rejected')}>Rechazar</Btn>
+          <Btn v="success" size="sm" onClick={()=>onApproveOT(r.id,'approved')}>Aprobar</Btn>
+        </div>
+      </Card>;})}
+      <Divider/>
+      <Hdr>Historial de horas extras</Hdr>
+      {overtime.filter(r=>r.status!=='pending').map(r=>{const drv=users.find(u=>u.id===r.driverId);return <Card key={r.id} style={{marginBottom:8,display:'flex',alignItems:'center',gap:12}}>
+        <Av name={drv?.name||'?'} size={34}/>
+        <div style={{flex:1}}>
+          <div style={{fontSize:13,fontWeight:500,color:C.tx}}>{drv?.name}</div>
+          <div style={{fontSize:12,color:C.mt}}>{r.date} · {r.hours}h · {r.startTime}–{r.endTime}</div>
+        </div>
+        <Pill s={r.status} label={r.status==='approved'?'Aprobadas':'Rechazadas'}/>
+      </Card>;})}
+    </div>}
     {tab==='requests'&&<div>
       {allPending.length===0?<Card style={{marginBottom:12}}><div style={{color:C.ht}}>Sin solicitudes pendientes</div></Card>
       :allPending.map(r=><ReqCard key={r.id} r={r} users={users} canApprove myId={me.id} onApprove={onApprove} onAccept={onAccept}/>)}
@@ -935,6 +1113,19 @@ function SupervisorView({me,users,daysOff,setDaysOff,attendance,requests,reports
       <div style={{display:'flex',gap:10}}><Btn onClick={()=>setDoModal(false)} v="outline">Cancelar</Btn><Btn onClick={addDayOff} v="primary" full disabled={!doForm.userId}>Guardar</Btn></div>
     </Modal>
     <PinModal open={pinModal} onClose={()=>setPinModal(false)} user={me} onSave={pin=>onChangePin(me.id,pin)}/>
+
+    <Modal open={supModal==='user'} onClose={()=>{setSupModal(null);setSupEu(null);setSupForm({});}} title={supEu?'Editar usuario':'Nuevo usuario'}>
+      <Fld label="Nombre" value={supForm.name||''} onChange={v=>setSupForm(f=>({...f,name:v}))} placeholder="Nombre Apellido"/>
+      <Fld label="PIN" value={supForm.pin||''} onChange={v=>setSupForm(f=>({...f,pin:v}))} placeholder="ej: 1009"/>
+      <Fld label="Rol" value={supForm.role||'driver'} onChange={v=>setSupForm(f=>({...f,role:v}))} options={[{v:'driver',l:'Driver'},{v:'despacho',l:'Despacho'},{v:'aux_despacho',l:'Aux. Despacho'}]}/>
+      {supForm.role==='driver'&&<Fld label="Categoría" value={supForm.category||'independiente'} onChange={v=>setSupForm(f=>({...f,category:v}))} options={Object.entries(CATEGORIES).map(([v,c])=>({v,l:c.label}))}/>}
+      <Fld label="Sucursal" value={supForm.sucursalId||''} onChange={v=>setSupForm(f=>({...f,sucursalId:v}))} options={SUCS.map(s=>({v:s.id,l:s.name}))}/>
+      <Fld label="Turno" value={supForm.shiftId||''} onChange={v=>setSupForm(f=>({...f,shiftId:v}))} options={[{v:'',l:'Sin turno'},...SHIFTS.map(s=>({v:s.id,l:s.name}))]}/>
+      <div style={{display:'flex',gap:10}}>
+        <Btn onClick={()=>setSupModal(null)} v="outline">Cancelar</Btn>
+        <Btn onClick={()=>{if(supEu)updateUsers(p=>p.map(u=>u.id===supEu.id?{...u,...supForm}:u));else updateUsers(p=>[...p,{id:uid(),...supForm}]);setSupModal(null);setSupEu(null);setSupForm({});}} v="primary" full disabled={!supForm.name||!supForm.pin}>Guardar</Btn>
+      </div>
+    </Modal>
   </div>;
 }
 
@@ -1033,6 +1224,7 @@ function AdminView({me,users,updateUsers,daysOff,attendance,requests,reports,not
       <Fld label="Nombre" value={form.name||''} onChange={v=>setForm(f=>({...f,name:v}))} placeholder="Nombre Apellido"/>
       <Fld label="PIN" value={form.pin||''} onChange={v=>setForm(f=>({...f,pin:v}))} placeholder="0000"/>
       <Fld label="Rol" value={form.role||'driver'} onChange={v=>setForm(f=>({...f,role:v}))} options={Object.entries(RL).map(([v,l])=>({v,l}))}/>
+      {(form.role==='driver')&&<Fld label="Categoría" value={form.category||'independiente'} onChange={v=>setForm(f=>({...f,category:v}))} options={Object.entries(CATEGORIES).map(([v,c])=>({v,l:c.label}))}/>}
       <Fld label="Sucursal" value={form.sucursalId||''} onChange={v=>setForm(f=>({...f,sucursalId:v}))} options={[{v:'',l:'Sin sucursal'},...SUCS.map(s=>({v:s.id,l:s.name}))]}/>
       <div style={{fontSize:12,color:C.ht,marginTop:-8,marginBottom:14}}>El turno lo asigna el Supervisor</div>
       <div style={{display:'flex',gap:10}}><Btn onClick={()=>setModal(null)} v="outline">Cancelar</Btn><Btn onClick={saveUser} v="primary" full disabled={!form.name}>Guardar</Btn></div>
@@ -1054,13 +1246,15 @@ export default function App(){
   const[notes,setNotesLocal]=useState([]);
   const[alerts,setAlertsLocal]=useState([]);
   const[locations,setLoc]=useState([]);
+  const[vehicleAssignments,setVALocal]=useState([]);
+  const[overtime,setOTLocal]=useState([]);
   const[me,setMe]=useState(null);
 
   // ── Load all data from Supabase ─────────────────────────
   useEffect(()=>{
     async function loadAll(){
       try{
-        const[u,att,req,rep,notif,dof,nt,al,loc]=await Promise.all([
+        const[u,att,req,rep,notif,dof,nt,al,loc,va,ot]=await Promise.all([
           supabase.from('users').select('*'),
           supabase.from('attendance').select('*'),
           supabase.from('requests').select('*').order('created_at',{ascending:false}),
@@ -1070,6 +1264,8 @@ export default function App(){
           supabase.from('notes').select('*').order('created_at',{ascending:false}),
           supabase.from('alerts').select('*'),
           supabase.from('locations').select('*'),
+          supabase.from('vehicle_assignments').select('*'),
+          supabase.from('overtime_records').select('*').order('created_at',{ascending:false}),
         ]);
         if(u.error)throw u.error;
         setUsers((u.data||[]).map(mapUser));
@@ -1080,6 +1276,8 @@ export default function App(){
         setDaysOffLocal((dof.data||[]).map(mapDO));
         setNotesLocal((nt.data||[]).map(mapNote));
         setAlertsLocal((al.data||[]).map(mapAlert));
+        setVALocal((va.data||[]).map(mapVA));
+        setOTLocal((ot.data||[]).map(mapOT));
         const dbLocs=(loc.data||[]).map(mapLoc);
         const locs=INIT_USERS.filter(u=>u.role==='driver').map(u=>{
           const ex=dbLocs.find(l=>l.userId===u.id);if(ex)return ex;
@@ -1129,6 +1327,14 @@ export default function App(){
       })
       .on('postgres_changes',{event:'DELETE',schema:'public',table:'users'},({old:o})=>
         setUsers(p=>p.filter(u=>u.id!==o.id)))
+      .on('postgres_changes',{event:'INSERT',schema:'public',table:'overtime_records'},({new:n})=>
+        setOTLocal(p=>[mapOT(n),...p.filter(x=>x.id!==n.id)]))
+      .on('postgres_changes',{event:'UPDATE',schema:'public',table:'overtime_records'},({new:n})=>
+        setOTLocal(p=>p.map(x=>x.id===n.id?mapOT(n):x)))
+      .on('postgres_changes',{event:'INSERT',schema:'public',table:'vehicle_assignments'},({new:n})=>
+        setVALocal(p=>[...p.filter(x=>x.id!==n.id),mapVA(n)]))
+      .on('postgres_changes',{event:'DELETE',schema:'public',table:'vehicle_assignments'},({old:o})=>
+        setVALocal(p=>p.filter(x=>x.id!==o.id)))
       .on('postgres_changes',{event:'UPSERT',schema:'public',table:'locations'},({new:n})=>
         setLoc(p=>p.map(l=>l.userId===n.user_id?mapLoc(n):l)))
       .subscribe();
@@ -1262,6 +1468,21 @@ export default function App(){
     await supabase.from('users').update({pin:newPin}).eq('id',userId);
   }
 
+  async function handleAddOvertime(ot){
+    await supabase.from('overtime_records').insert({id:uid(),driver_id:ot.driverId,date:ot.date,start_time:ot.startTime,end_time:ot.endTime,hours:ot.hours,reason:ot.reason,status:'pending'});
+    await Promise.all(users.filter(u=>u.role==='supervisor').map(u=>addNotif(u.id,`Horas extras: ${users.find(x=>x.id===ot.driverId)?.name} - ${ot.hours}h el ${ot.date}`)));
+  }
+  async function handleApproveOT(id,status){
+    await supabase.from('overtime_records').update({status}).eq('id',id);
+    const r=overtime.find(x=>x.id===id);
+    if(r)await addNotif(r.driverId,`Tus horas extras del ${r.date} fueron ${status==='approved'?'aprobadas ✓':'rechazadas ✗'}`);
+  }
+  async function handleAssignVehicle(driverId,vehicle,detail){
+    await supabase.from('vehicle_assignments').insert({id:uid(),driver_id:driverId,vehicle,detail:detail||'',assigned_by:me.id});
+  }
+  async function handleRemoveVehicle(id){
+    await supabase.from('vehicle_assignments').delete().eq('id',id);
+  }
   async function handleAddNote(note){
     await supabase.from('notes').insert({id:uid(),date:note.date,text:note.text,author_id:note.authorId});
   }
@@ -1303,11 +1524,11 @@ export default function App(){
 
   if(!me)return <LoginView users={users} onLogin={setMe}/>;
 
-  const shared={me,users,daysOff,attendance,requests,reports,notifications:notifs,locations,notes,alerts,
+  const shared={me,users,daysOff,attendance,requests,reports,notifications:notifs,locations,notes,alerts,vehicleAssignments,overtime,
     onMarkRead:handleMarkRead,onChangePin:handleChangePin,onLogout:()=>setMe(null)};
 
   if(me.role==='admin')return <AdminView {...shared} updateUsers={updateUsers}/>;
-  if(me.role==='supervisor')return <SupervisorView {...shared} setDaysOff={setDaysOff} onApprove={handleApprove} onAccept={handleAccept} onAddNote={handleAddNote} onDeleteNote={handleDeleteNote}/>;
-  if(me.role==='despacho'||me.role==='aux_despacho')return <DespachoView {...shared} onApprove={handleApprove} onAddReport={handleAddReport} onAddNote={handleAddNote} onDeleteNote={handleDeleteNote}/>;
-  return <DriverView {...shared} onClock={handleClock} onAddReq={handleAddReq} onAccept={handleAccept}/>;
+  if(me.role==='supervisor')return <SupervisorView {...shared} setDaysOff={setDaysOff} onApprove={handleApprove} onAccept={handleAccept} onAddNote={handleAddNote} onDeleteNote={handleDeleteNote} updateUsers={updateUsers} onApproveOT={handleApproveOT}/>;
+  if(me.role==='despacho'||me.role==='aux_despacho')return <DespachoView {...shared} onApprove={handleApprove} onAddReport={handleAddReport} onAddNote={handleAddNote} onDeleteNote={handleDeleteNote} onAssignVehicle={handleAssignVehicle} onRemoveVehicle={handleRemoveVehicle} updateUsers={updateUsers} onApproveOT={handleApproveOT}/>;
+  return <DriverView {...shared} onClock={handleClock} onAddReq={handleAddReq} onAccept={handleAccept} onAddOvertime={handleAddOvertime}/>;
 }
